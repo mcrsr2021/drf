@@ -1,4 +1,3 @@
-from django.views.decorators import csrf
 from testapp.models import Employee
 from testapp.forms import EmployeeForm
 from django.http import HttpResponse
@@ -6,15 +5,18 @@ from django.core.serializers import serialize
 import json
 from django.views.decorators.csrf import csrf_exempt
 
-@csrf_exempt
-def employee_detail(request,pk):
-    try:
-        emp = Employee.objects.get(pk=pk)
-    except Employee.DoesNotExist:
-        json_data = json.dumps({'msg':'The requested resource not available'})
-        return HttpResponse(json_data,content_type='application/json',status=404)
+from django.views.generic import View
+from django.utils.decorators import method_decorator
+
+@method_decorator(csrf_exempt,name='dispatch')
+class EmployeeDetail(View):
+    def get(self,request,pk,*args,**kwargs):
+        try:
+            emp = Employee.objects.get(pk=pk)
+        except Employee.DoesNotExist:
+            json_data = json.dumps({'msg':'The requested resource not available'})
+            return HttpResponse(json_data,content_type='application/json',status=404)
         
-    if request.method == 'GET':
         json_data = serialize('json',[emp,])
         p_data = json.loads(json_data)
         final_list = []
@@ -23,8 +25,14 @@ def employee_detail(request,pk):
             final_list.append(emp_data)
         json_data = json.dumps(final_list)
         return HttpResponse(json_data,content_type='application/json',status=200)
-    
-    elif request.method == 'PUT':
+
+    def put(self,request,pk,*args,**kwargs):
+        try:
+            emp = Employee.objects.get(pk=pk)
+        except Employee.DoesNotExist:
+            json_data = json.dumps({'msg':'The requested resource not available'})
+            return HttpResponse(json_data,content_type='application/json',status=404)
+
         b_data = request.body  #binary data
         json_data = b_data.decode('utf-8') # json data
         try:
@@ -43,14 +51,21 @@ def employee_detail(request,pk):
         if form.errors:
             json_data = json.dumps(form.errors)
             return HttpResponse(json_data,content_type='application/json',status=400)
-    
-    elif request.method == 'DELETE':
+
+    def delete(self,request,pk,*args,**kwargs):
+        try:
+            emp = Employee.objects.get(pk=pk)
+        except Employee.DoesNotExist:
+            json_data = json.dumps({'msg':'The requested resource not available'})
+            return HttpResponse(json_data,content_type='application/json',status=404)
+        
         emp.delete()
         return HttpResponse(status=204)
 
-@csrf_exempt
-def employee_list(request):
-    if request.method == 'GET':
+
+@method_decorator(csrf_exempt,name='dispatch')
+class EmployeeList(View):
+    def get(self,request,*args,**kwargs):
         emp = Employee.objects.all()
         json_data = serialize('json',emp)
         p_data = json.loads(json_data)
@@ -61,7 +76,7 @@ def employee_list(request):
         json_data = json.dumps(final_list)
         return HttpResponse(json_data,content_type='application/json',status=200)
 
-    elif request.method == 'POST':
+    def post(self,request,*args,**kwargs):
         b_data = request.body  #binary data
         json_data = b_data.decode('utf-8') # json data
         try:
