@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 @api_view(['GET','POST'])
-def employee_list(request):
+def employee_list(request,format=None):
 
     if request.method == 'GET':
         emp = Employee.objects.all()
@@ -20,7 +20,7 @@ def employee_list(request):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET','PUT','DELETE'])
-def employee_detail(request,pk):
+def employee_detail(request,pk,format=None):
     try:
         emp = Employee.objects.get(pk=pk)
     except Employee.DoesNotExist:
